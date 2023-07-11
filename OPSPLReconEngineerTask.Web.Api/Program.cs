@@ -4,7 +4,8 @@ using OPSPLReconEngineerTask.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<IDateTimeProvider, DateTimeProvider>();
-builder.Services.AddScoped<OPSPLTaskContext>();
+builder.Services.AddScoped<OPSPLTaskContext>(_ =>
+    new OPSPLTaskContext(builder.Configuration.GetConnectionString("OPSPL")));
 builder.Services.AddScoped<IWordInverter, WordInverter>();
 builder.Services.AddScoped<IInvertWordsService, InvertWordsService>();
 builder.Services.AddScoped<IBookSearchService, BookSearchService>();

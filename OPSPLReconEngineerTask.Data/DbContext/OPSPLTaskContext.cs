@@ -1,12 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using OPSPLReconEngineerTask.Data.Models;
 
 namespace OPSPLReconEngineerTask.Data.DbContext;
 
 public partial class OPSPLTaskContext : Microsoft.EntityFrameworkCore.DbContext
 {
-    public OPSPLTaskContext()
+    private readonly string _connectionString;
+
+    public OPSPLTaskContext(string connectionString)
     {
+        _connectionString = connectionString;
     }
 
     public OPSPLTaskContext(DbContextOptions<OPSPLTaskContext> options)
@@ -23,8 +27,7 @@ public partial class OPSPLTaskContext : Microsoft.EntityFrameworkCore.DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=OPSPLTask;Trusted_Connection=True;TrustServerCertificate=true");
+        => optionsBuilder.UseSqlServer(_connectionString);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
