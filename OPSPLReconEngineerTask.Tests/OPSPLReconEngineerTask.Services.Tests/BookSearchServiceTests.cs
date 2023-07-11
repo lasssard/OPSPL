@@ -1,7 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Moq;
+﻿using Moq;
 using OPSPLReconEngineerTask.Data.DbContext;
-using OPSPLReconEngineerTask.Data.Models;
 
 namespace OPSPLReconEngineerTask.Services.Tests;
 
@@ -9,30 +7,23 @@ namespace OPSPLReconEngineerTask.Services.Tests;
 public class BookSearchServiceTests
 {
     [Test]
-    public async Task SearchByAuthor_GivesExpectedResult()
+    public async Task SearchByAuthorName_ReturnsOneMatchedBooksResult()
     {
         //Arrange
         var dbContext = new Mock<OPSPLTaskContext>();
-        var data = new List<Author>
+        var authors = TestDataProvider.GetAuthors();
+        var books = TestDataProvider.GetBooks();
+        for (var i = 0; i < books.Count; i++)
         {
-            new Author()
-            {
-                Id = 0, FirstName = "Bob", MiddleName = "Jackson", LastName = "Builder",
-                Books = new[] { new Book { AuthorId = 0, Id = 0, Title = "LOR", Description = "LOR text" } }
-            },
-            new Author()
-            {
-                Id = 1, FirstName = "Bil", LastName = "Dow",
-                Books = new[] { new Book { AuthorId = 1, Id = 1, Title = "BOR", Description = "BOR text" } }
-            },
-            new Author()
-            {
-                Id = 2, FirstName = "Lans", LastName = "Far",
-                Books = new[] { new Book { AuthorId = 2, Id = 2, Title = "FAR", Description = "FAR text" } }
-            },
-        }.AsQueryable();
+            books[i].Author = authors[i];
+            books[i].AuthorId = authors[i].Id;
+        }
+        for (var i = 0; i < authors.Count; i++)
+        {
+            authors[i].Books.Add(books[i]);
+        }
 
-        var mockSet = GetDbSetMock(data);
+        var mockSet = TestDataProvider.GetDbSetMock(authors.AsQueryable());
 
         dbContext.Setup(x => x.Authors).Returns(mockSet);
         var testable = new BookSearchService(dbContext.Object);
@@ -42,31 +33,17 @@ public class BookSearchServiceTests
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(1));
-        Assert.That(result.FirstOrDefault().AuthorId, Is.EqualTo(data.FirstOrDefault().Id));
+        Assert.That(result.FirstOrDefault().Id, Is.EqualTo(books.FirstOrDefault().Id));
     }
 
     [Test]
-    public async Task SearchByDescription_GivesExpectedResult()
+    public async Task SearchByDescriptionPart_ReturnsMatchedBooksResult()
     {
         //Arrange
         var dbContext = new Mock<OPSPLTaskContext>();
-        var data = new List<Book>
-        {
-            new Book()
-            {
-                Id = 0, Title = "LOR", Description = "LOR text", AuthorId = 0
-            },
-            new Book()
-            {
-                Id = 1, Title = "BOR", Description = "BOR text", AuthorId = 1
-            },
-            new Book()
-            {
-                Id = 2, Title = "FAR", Description = "FAR text", AuthorId = 2
-            },
-        }.AsQueryable();
+        var books = TestDataProvider.GetBooks();
 
-        var mockSet = GetDbSetMock(data);
+        var mockSet = TestDataProvider.GetDbSetMock(books.AsQueryable());
 
         dbContext.Setup(x => x.Books).Returns(mockSet);
         var testable = new BookSearchService(dbContext.Object);
@@ -76,31 +53,17 @@ public class BookSearchServiceTests
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(3));
-        CollectionAssert.AreEquivalent(result, data.ToList());
+        CollectionAssert.AreEquivalent(result, books);
     }
 
     [Test]
-    public async Task SearchByTitle_GivesExpectedResult()
+    public async Task SearchByTitlePart_ReturnsTwoMatchedBooksResult()
     {
         //Arrange
         var dbContext = new Mock<OPSPLTaskContext>();
-        var data = new List<Book>
-        {
-            new Book()
-            {
-                Id = 0, Title = "LOR", Description = "LOR text", AuthorId = 0
-            },
-            new Book()
-            {
-                Id = 1, Title = "BOR", Description = "BOR text", AuthorId = 1
-            },
-            new Book()
-            {
-                Id = 2, Title = "FAR", Description = "FAR text", AuthorId = 2
-            },
-        }.AsQueryable();
+        var books = TestDataProvider.GetBooks();
 
-        var mockSet = GetDbSetMock(data);
+        var mockSet = TestDataProvider.GetDbSetMock(books.AsQueryable());
 
         dbContext.Setup(x => x.Books).Returns(mockSet);
         var testable = new BookSearchService(dbContext.Object);
@@ -110,50 +73,25 @@ public class BookSearchServiceTests
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(2));
-        Assert.That(result[0].Id, Is.EqualTo(data.ToList()[0].Id));
-        Assert.That(result[1].Id, Is.EqualTo(data.ToList()[1].Id));
+        Assert.That(result[0].Id, Is.EqualTo(books[0].Id));
+        Assert.That(result[1].Id, Is.EqualTo(books[1].Id));
     }
 
     [Test]
-    public async Task SearchByUserWhoHoldingBook_GivesExpectedResult()
+    public async Task SearchByUserWhoHoldingBook_ReturnsTwoMatchedBooksResult()
     {
         //Arrange
         var dbContext = new Mock<OPSPLTaskContext>();
-        var data = new List<BooksTaken>
-        {
-            new BooksTaken()
-            {
-                UserId = 0, BookId = 2,
-                User = new User { Id = 0, FirstName = "Bil", LastName = "Dow", Email = "bd@g.com" },
-                DateTaken = new DateTime(2020, 11, 11),
-                Book = new Book()
-                {
-                    Id = 2, Title = "FAR", Description = "FAR text", AuthorId = 2
-                }
-            },
-            new BooksTaken()
-            {
-                UserId = 1, BookId = 1,
-                User = new User { Id = 1, FirstName = "Mac", LastName = "Jim", Email = "mj@g.com" },
-                DateTaken = new DateTime(2023, 7, 23),
-                Book = new Book()
-                {
-                    Id = 1, Title = "BOR", Description = "BOR text", AuthorId = 1
-                }
-            },
-            new BooksTaken()
-            {
-                UserId = 2, BookId = 0,
-                User = new User { Id = 2, FirstName = "Jimmy", LastName = "Baron", Email = "jb@g.com" },
-                DateTaken = new DateTime(2023, 4, 15),
-                Book = new Book()
-                {
-                    Id = 0, Title = "LOR", Description = "LOR text", AuthorId = 0
-                }
-            }
-        }.AsQueryable();
 
-        var mockSet = GetDbSetMock(data);
+        var books = TestDataProvider.GetBooks();
+        var booksTaken = TestDataProvider.GetBooksTaken();
+        for (var i = 0; i < booksTaken.Count; i++)
+        {
+            booksTaken[i].Book = books[i];
+            booksTaken[i].BookId = books[i].Id;
+        }
+        
+        var mockSet = TestDataProvider.GetDbSetMock(booksTaken.AsQueryable());
 
         dbContext.Setup(x => x.BooksTakens).Returns(mockSet);
         var testable = new BookSearchService(dbContext.Object);
@@ -163,88 +101,39 @@ public class BookSearchServiceTests
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(2));
-        Assert.That(result[0].Id, Is.EqualTo(data.ToList()[1].BookId));
-        Assert.That(result[1].Id, Is.EqualTo(data.ToList()[2].BookId));
+        Assert.That(result[0].Id, Is.EqualTo(booksTaken[1].BookId));
+        Assert.That(result[1].Id, Is.EqualTo(booksTaken[2].BookId));
     }
 
     [Test]
-    public async Task SearchMultipleTermsOr_GivesExpectedResult()
+    public async Task SearchMultipleButOneMatchedTerm_Or_ReturnsOneMatchedBookResult()
     {
         //Arrange
         var dbContext = new Mock<OPSPLTaskContext>();
-        var booksTakenData = new List<BooksTaken>
+        var booksTaken = TestDataProvider.GetBooksTaken();
+        var authors = TestDataProvider.GetAuthors();
+        var books = TestDataProvider.GetBooks();
+        for (var i = 0; i < books.Count; i++)
         {
-            new BooksTaken()
-            {
-                UserId = 0, BookId = 2,
-                User = new User { Id = 0, FirstName = "Bil", LastName = "Dow", Email = "bd@g.com" },
-                DateTaken = new DateTime(2020, 11, 11),
-                Book = new Book()
-                {
-                    Id = 2, Title = "FAR", Description = "FAR text", AuthorId = 2
-                }
-            },
-            new BooksTaken()
-            {
-                UserId = 1, BookId = 1,
-                User = new User { Id = 1, FirstName = "Mac", LastName = "Jim", Email = "mj@g.com" },
-                DateTaken = new DateTime(2023, 7, 23),
-                Book = new Book()
-                {
-                    Id = 1, Title = "BOR", Description = "BOR text", AuthorId = 1
-                }
-            },
-            new BooksTaken()
-            {
-                UserId = 2, BookId = 0,
-                User = new User { Id = 2, FirstName = "Jimmy", LastName = "Baron", Email = "jb@g.com" },
-                DateTaken = new DateTime(2023, 4, 15),
-                Book = new Book()
-                {
-                    Id = 0, Title = "LOR", Description = "LOR text", AuthorId = 0
-                }
-            }
-        }.AsQueryable();
-
-        var booksData = new List<Book>
+            books[i].Author = authors[i];
+            books[i].AuthorId = authors[i].Id;
+        }
+        
+        for (var i = 0; i < authors.Count; i++)
         {
-            new Book()
-            {
-                Id = 0, Title = "LOR", Description = "LOR text", AuthorId = 0
-            },
-            new Book()
-            {
-                Id = 1, Title = "BOR", Description = "BOR text", AuthorId = 1
-            },
-            new Book()
-            {
-                Id = 2, Title = "FAR", Description = "FAR text", AuthorId = 2
-            },
-        }.AsQueryable();
+            authors[i].Books.Add(books[i]);
+        }
 
-        var authorsData = new List<Author>
+        for (var i = 0; i < booksTaken.Count; i++)
         {
-            new Author()
-            {
-                Id = 0, FirstName = "Bob", MiddleName = "Jackson", LastName = "Builder",
-                Books = new[] { new Book { AuthorId = 0, Id = 0, Title = "LOR", Description = String.Empty } }
-            },
-            new Author()
-            {
-                Id = 1, FirstName = "Bil", LastName = "Dow",
-                Books = new[] { new Book { AuthorId = 1, Id = 1, Title = "BOR", Description = String.Empty } }
-            },
-            new Author()
-            {
-                Id = 2, FirstName = "Lans", LastName = "Far",
-                Books = new[] { new Book { AuthorId = 2, Id = 2, Title = "FAR", Description = "Description2" } }
-            },
-        }.AsQueryable();
+            booksTaken[i].Book = books[i];
+            booksTaken[i].BookId = books[i].Id;
+        }
 
 
-        var mockBooksTakenSet = GetDbSetMock(booksTakenData);
-        var mockBooksSet = GetDbSetMock(booksData);
-        var mockAuthorsSet = GetDbSetMock(authorsData);
+        var mockBooksTakenSet = TestDataProvider.GetDbSetMock(booksTaken.AsQueryable());
+        var mockBooksSet = TestDataProvider.GetDbSetMock(books.AsQueryable());
+        var mockAuthorsSet = TestDataProvider.GetDbSetMock(authors.AsQueryable());
 
         dbContext.Setup(x => x.Books).Returns(mockBooksSet);
         dbContext.Setup(x => x.Authors).Returns(mockAuthorsSet);
@@ -252,26 +141,89 @@ public class BookSearchServiceTests
         var testable = new BookSearchService(dbContext.Object);
 
         //Act
-        var result = (await testable.SearchAsync("Frank", "LOR", "Dirk", "or", CancellationToken.None)).ToList();
+        var result = (await testable.SearchAsync("Frank", "LoR", "dirk", "or", CancellationToken.None)).ToList();
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(1));
-        Assert.That(result[0].Id, Is.EqualTo(booksData.ToList()[0].Id));
+        Assert.That(result[0].Id, Is.EqualTo(books[0].Id));
     }
     
-    private DbSet<T> GetDbSetMock<T>(IQueryable<T> data) where T : class
+    [Test]
+    public async Task Search2MatchTerms_And_ReturnsOneMatchedBookResult()
     {
-        var mockSet = new Mock<DbSet<T>>();
-        mockSet.As<IAsyncEnumerable<T>>()
-            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(new TestDbAsyncEnumerator<T>(data.GetEnumerator()));
-        mockSet.As<IQueryable<T>>()
-            .Setup(m => m.Provider)
-            .Returns(new TestDbAsyncQueryProvider<T>(data.Provider));
+        //Arrange
+        var dbContext = new Mock<OPSPLTaskContext>();
+        var booksTaken = TestDataProvider.GetBooksTaken();
+        var authors = TestDataProvider.GetAuthors();
+        var books = TestDataProvider.GetBooks();
+        for (var i = 0; i < books.Count; i++)
+        {
+            books[i].Author = authors[i];
+            books[i].AuthorId = authors[i].Id;
+        }
+        for (var i = 0; i < authors.Count; i++)
+        {
+            authors[i].Books.Add(books[i]);
+        }
+        for (var i = 0; i < booksTaken.Count; i++)
+        {
+            booksTaken[i].Book = books[i];
+            booksTaken[i].BookId = books[i].Id;
+        }
 
-        mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
-        mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
-        mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => data.GetEnumerator());
-        return mockSet.Object;
+        var mockBooksTakenSet = TestDataProvider.GetDbSetMock(booksTaken.AsQueryable());
+        var mockBooksSet = TestDataProvider.GetDbSetMock(books.AsQueryable());
+        var mockAuthorsSet = TestDataProvider.GetDbSetMock(authors.AsQueryable());
+
+        dbContext.Setup(x => x.Books).Returns(mockBooksSet);
+        dbContext.Setup(x => x.Authors).Returns(mockAuthorsSet);
+        dbContext.Setup(x => x.BooksTakens).Returns(mockBooksTakenSet);
+        var testable = new BookSearchService(dbContext.Object);
+
+        //Act
+        var result = (await testable.SearchAsync("dow", "", "MaC", "and", CancellationToken.None)).ToList();
+
+        //Assert
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].Id, Is.EqualTo(books[1].Id));
+    }
+    
+    [Test]
+    public async Task Search2NotMatchTerms_And_ReturnsEmptyResult()
+    {
+        //Arrange
+        var dbContext = new Mock<OPSPLTaskContext>();
+        var booksTaken = TestDataProvider.GetBooksTaken();
+        var authors = TestDataProvider.GetAuthors();
+        var books = TestDataProvider.GetBooks();
+        for (var i = 0; i < books.Count; i++)
+        {
+            books[i].Author = authors[i];
+            books[i].AuthorId = authors[i].Id;
+        }
+        for (var i = 0; i < authors.Count; i++)
+        {
+            authors[i].Books.Add(books[i]);
+        }
+        for (var i = 0; i < booksTaken.Count; i++)
+        {
+            booksTaken[i].Book = books[i];
+            booksTaken[i].BookId = books[i].Id;
+        }
+
+        var mockBooksTakenSet = TestDataProvider.GetDbSetMock(booksTaken.AsQueryable());
+        var mockBooksSet = TestDataProvider.GetDbSetMock(books.AsQueryable());
+        var mockAuthorsSet = TestDataProvider.GetDbSetMock(authors.AsQueryable());
+
+        dbContext.Setup(x => x.Books).Returns(mockBooksSet);
+        dbContext.Setup(x => x.Authors).Returns(mockAuthorsSet);
+        dbContext.Setup(x => x.BooksTakens).Returns(mockBooksTakenSet);
+        var testable = new BookSearchService(dbContext.Object);
+
+        //Act
+        var result = (await testable.SearchAsync("Dow", "", "Jimmy", "and", CancellationToken.None)).ToList();
+
+        //Assert
+        Assert.That(result.Count, Is.EqualTo(0));
     }
 }
