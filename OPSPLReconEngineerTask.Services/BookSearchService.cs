@@ -81,23 +81,23 @@ public class BookSearchService : IBookSearchService
     private IQueryable<Book> SearchByAuthor(string author)
     {
         return _dbContext.Authors.Where(a =>
-            a.FirstName.Contains(author, StringComparison.InvariantCultureIgnoreCase)
-            || a.LastName.Contains(author, StringComparison.InvariantCultureIgnoreCase)
-            || a.MiddleName != null && a.MiddleName.Contains(author, StringComparison.InvariantCultureIgnoreCase)).SelectMany(x => x.Books);
+            a.FirstName.Contains(author)
+            || a.LastName.Contains(author)
+            || a.MiddleName != null && a.MiddleName.Contains(author)).SelectMany(x => x.Books);
     }
 
     private IQueryable<Book> SearchBookByText(string textToFind)
     {
         return _dbContext.Books.Where(a =>
-            a.Title.Contains(textToFind, StringComparison.InvariantCultureIgnoreCase)
-            || a.Description != null && a.Description.Contains(textToFind, StringComparison.InvariantCultureIgnoreCase));
+            a.Title.Contains(textToFind)
+            || a.Description != null && a.Description.Contains(textToFind));
     }
 
     private IQueryable<Book> SearchBookByCurrentBookHolder(string currentBookHolder)
     {
         return _dbContext.BooksTakens.Where(a =>
-            a.User.FirstName.Contains(currentBookHolder, StringComparison.InvariantCultureIgnoreCase)
-            || a.User.LastName.Contains(currentBookHolder, StringComparison.InvariantCultureIgnoreCase)
-            || a.User.Email.Contains(currentBookHolder, StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Book);
+            a.User.FirstName.Contains(currentBookHolder)
+            || a.User.LastName.Contains(currentBookHolder)
+            || a.User.Email.Contains(currentBookHolder)).Select(x => x.Book);
     }
 }

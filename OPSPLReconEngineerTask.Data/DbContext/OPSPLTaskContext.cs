@@ -8,6 +8,11 @@ public partial class OPSPLTaskContext : Microsoft.EntityFrameworkCore.DbContext
 {
     private readonly string _connectionString;
 
+    public OPSPLTaskContext() 
+        : this(string.Empty)
+    {
+    }
+    
     public OPSPLTaskContext(string connectionString)
     {
         _connectionString = connectionString;

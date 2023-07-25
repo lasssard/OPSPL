@@ -141,7 +141,7 @@ public class BookSearchServiceTests
         var testable = new BookSearchService(dbContext.Object);
 
         //Act
-        var result = (await testable.SearchAsync("Frank", "LoR", "dirk", "or", CancellationToken.None)).ToList();
+        var result = (await testable.SearchAsync("Frank", "LOR", "Dirk", "or", CancellationToken.None)).ToList();
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(1));
@@ -181,7 +181,7 @@ public class BookSearchServiceTests
         var testable = new BookSearchService(dbContext.Object);
 
         //Act
-        var result = (await testable.SearchAsync("dow", "", "MaC", "and", CancellationToken.None)).ToList();
+        var result = (await testable.SearchAsync("Dow", "", "Mac", "and", CancellationToken.None)).ToList();
 
         //Assert
         Assert.That(result.Count, Is.EqualTo(1));
